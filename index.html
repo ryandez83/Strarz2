@@ -1,0 +1,203 @@
+import tkinter as tk
+from tkinter import messagebox, ttk
+import random
+import pygame.mixer
+
+# Initialize pygame mixer for sound
+pygame.mixer.init()
+
+# Load sound effects
+try:
+    correct_sound = pygame.mixer.Sound("correct.wav")  # Sound for correct answer
+    incorrect_sound = pygame.mixer.Sound("incorrect.wav")  # Sound for incorrect answer
+except pygame.error as e:
+    print(f"Error loading sound files: {e}. Ensure 'correct.wav' and 'incorrect.wav' are in the same directory.")
+    correct_sound = None
+    incorrect_sound = None
+
+# Full list of 60 questions
+questions = [
+    {"question": "Why were Annemarie and Kirsti stopped by the German soldiers in Chapter 4?", "options": ["They were running too fast.", "They were out after curfew.", "They were suspected of carrying contraband.", "The soldiers were looking for someone."], "answer": "They were running too fast."},
+    {"question": "How did Kirsti react to the soldiers in Chapter 4?", "options": ["She was scared and cried.", "She was polite and quiet.", "She talked back to them.", "She ran away."], "answer": "She talked back to them."},
+    {"question": "What reason did Annemarie’s mother give for the soldiers being edgy?", "options": ["The weather was bad.", "The Danish Resistance was causing trouble.", "They were tired from patrol.", "They were looking for escaped prisoners."], "answer": "The Danish Resistance was causing trouble."},
+    {"question": "Who told Annemarie about the Resistance?", "options": ["Her mother", "Her father", "Uncle Henrik", "Ellen"], "answer": "Her father"},
+    {"question": "Why did Ellen’s parents have to leave suddenly?", "options": ["They were going on vacation.", "They were in danger from the Nazis.", "They had to work in another city.", "They were visiting relatives."], "answer": "They were in danger from the Nazis."},
+    {"question": "Where did Ellen stay when her parents left?", "options": ["With her aunt", "At school", "With the Johansens", "In a hiding place"], "answer": "With the Johansens"},
+    {"question": "How was Ellen introduced to the soldiers who came to the apartment in Chapter 5?", "options": ["As Annemarie’s cousin", "As a neighbor’s child", "As Annemarie’s sister", "As a family friend"], "answer": "As Annemarie’s sister"},
+    {"question": "What feature of Ellen’s did the soldiers question in Chapter 5?", "options": ["Her height", "Her dark hair", "Her accent", "Her clothing"], "answer": "Her dark hair"},
+    {"question": "How did Annemarie’s father convince the soldiers that Ellen was part of the family?", "options": ["He showed them Ellen’s birth certificate.", "He showed them baby pictures.", "He called Ellen’s parents to confirm.", "He bribed the soldiers."], "answer": "He showed them baby pictures."},
+    {"question": "Whose baby pictures did Annemarie’s father show to the soldiers?", "options": ["Annemarie’s", "Kirsti’s", "Ellen’s", "Lise’s"], "answer": "Lise’s"},
+    {"question": "Why was it important that the baby pictures showed a child with dark hair?", "options": ["To prove that dark hair runs in the family.", "To show that Ellen could have been adopted.", "To match the soldiers’ expectations of a Danish family.", "To confuse the soldiers."], "answer": "To prove that dark hair runs in the family."},
+    {"question": "Where did the family decide to go in Chapter 6?", "options": ["To Sweden", "To Uncle Henrik’s house", "To the countryside", "Both b and c"], "answer": "Both b and c"},
+    {"question": "How did they travel to Uncle Henrik’s house?", "options": ["By car", "By boat", "By train", "By walking"], "answer": "By train"},
+    {"question": "What was Annemarie told to do if questioned on the train?", "options": ["To tell the truth", "To act like a silly little girl", "To pretend she was sick", "To say she was visiting her grandmother"], "answer": "To act like a silly little girl"},
+    {"question": "How did Annemarie feel when they arrived at Uncle Henrik’s house?", "options": ["Scared", "Relieved and safer", "Bored", "Anxious"], "answer": "Relieved and safer"},
+    {"question": "What does Kirsti say to the soldier who touches her hair in Chapter 4?", "options": ["\"Stop it!\"", "\"Don’t!\"", "\"Leave me alone!\"", "\"You’re mean!\""], "answer": "\"Don’t!\""},
+    {"question": "Why were the soldiers suspicious of Ellen in Chapter 5?", "options": ["She was hiding something.", "She looked different from the rest of the family.", "She was speaking a different language.", "She was carrying a suspicious bag."], "answer": "She looked different from the rest of the family."},
+    {"question": "What color was Lise’s hair when she was a baby?", "options": ["Blonde", "Dark", "Red", "Brown"], "answer": "Dark"},
+    {"question": "What color was Lise’s hair when she grew older?", "options": ["Blonde", "Dark", "Red", "Brown"], "answer": "Blonde"},
+    {"question": "Why did the family go to Uncle Henrik’s house?", "options": ["For a vacation", "To hide from the Nazis", "To help with fishing", "To attend a family gathering"], "answer": "To hide from the Nazis"},
+    {"question": "Who accompanied Annemarie, Ellen, and Kirsti on the train?", "options": ["Mr. Johansen", "Mrs. Johansen", "Both parents", "Uncle Henrik"], "answer": "Mrs. Johansen"},
+    {"question": "What time of year was it when they went to Uncle Henrik’s?", "options": ["Summer", "Autumn", "Winter", "Spring"], "answer": "Autumn"},
+    {"question": "What did Uncle Henrik do for a living?", "options": ["He was a teacher.", "He was a fisherman.", "He was a farmer.", "He was a soldier."], "answer": "He was a fisherman."},
+    {"question": "How did the sea look to Annemarie when she arrived at Uncle Henrik’s?", "options": ["Frightening", "Beautiful and familiar", "Polluted", "Full of ships"], "answer": "Beautiful and familiar"},
+    {"question": "What did Annemarie overhear her parents discussing in Chapter 4?", "options": ["The weather", "The Resistance", "Ellen’s parents being in danger", "Plans for a party"], "answer": "Ellen’s parents being in danger"},
+    {"question": "How did Annemarie feel when she learned that Ellen would be staying with them?", "options": ["Annoyed", "Happy", "Worried", "Indifferent"], "answer": "Happy"},
+    {"question": "What time of day did the soldiers come to the Johansen’s apartment in Chapter 5?", "options": ["Morning", "Afternoon", "Evening", "Night"], "answer": "Night"},
+    {"question": "How did Mrs. Johansen react when the soldiers entered the apartment?", "options": ["She was calm and composed.", "She was terrified.", "She was angry.", "She tried to hide Ellen."], "answer": "She was calm and composed."},
+    {"question": "Why did the soldiers leave without taking Ellen?", "options": ["They believed Mr. Johansen’s story.", "They were called away.", "They found nothing suspicious.", "Both a and c"], "answer": "Both a and c"},
+    {"question": "Why was Annemarie told to act like a silly little girl on the train?", "options": ["To annoy the soldiers", "To avoid suspicion", "To make Ellen laugh", "To pass the time"], "answer": "To avoid suspicion"},
+    {"question": "Did the soldiers on the train question Annemarie and her family?", "options": ["Yes", "No"], "answer": "No"},
+    {"question": "How did Kirsti behave on the train?", "options": ["She was quiet.", "She was restless and talkative.", "She was sleeping.", "She was reading."], "answer": "She was restless and talkative."},
+    {"question": "What does “Is the weather good for fishing?” mean in the context of the story?", "options": ["It’s a good day to go fishing.", "It’s safe to bring Ellen to Uncle Henrik’s.", "The sea is calm.", "There are no soldiers around."], "answer": "It’s safe to bring Ellen to Uncle Henrik’s."},
+    {"question": "Who asked, “Is the weather good for fishing?”", "options": ["Mr. Johansen", "Mrs. Johansen", "Annemarie", "Uncle Henrik"], "answer": "Mr. Johansen"},
+    {"question": "Was Uncle Henrik at home when they arrived?", "options": ["Yes", "No"], "answer": "No"},
+    {"question": "What was Uncle Henrik doing when they arrived?", "options": ["Fishing", "Farming", "Sleeping", "Cooking"], "answer": "Fishing"},
+    {"question": "What did Annemarie and Ellen do when they first arrived at Uncle Henrik’s house?", "options": ["They helped with dinner.", "They went to bed.", "They played outside.", "They listened to the radio."], "answer": "They played outside."},
+    {"question": "What did Annemarie do with Ellen’s necklace in Chapter 5?", "options": ["She threw it away.", "She hid it in her hand.", "She gave it to her mother.", "She buried it."], "answer": "She hid it in her hand."},
+    {"question": "How did Annemarie remove Ellen’s necklace?", "options": ["She asked Ellen to take it off.", "She unclasped it carefully.", "She ripped it off quickly.", "She cut it with scissors."], "answer": "She ripped it off quickly."},
+    {"question": "Why was it important to remove Ellen’s necklace?", "options": ["It was too tight.", "It was a Jewish symbol.", "It was broken.", "It was expensive."], "answer": "It was a Jewish symbol."},
+    {"question": "Ellen’s parents left because they were going on a trip.", "options": ["True", "False"], "answer": "False"},
+    {"question": "Annemarie’s father was a member of the Resistance.", "options": ["True", "False"], "answer": "True"},
+    {"question": "The soldiers came to the Johansen’s apartment in the morning.", "options": ["True", "False"], "answer": "False"},
+    {"question": "Kirsti was aware of the danger posed by the soldiers.", "options": ["True", "False"], "answer": "False"},
+    {"question": "Ellen wore a Star of David necklace, which Annemarie hid.", "options": ["True", "False"], "answer": "True"},
+    {"question": "The family traveled to Uncle Henrik’s house by boat.", "options": ["True", "False"], "answer": "False"},
+    {"question": "Annemarie was excited to visit Uncle Henrik.", "options": ["True", "False"], "answer": "True"},
+    {"question": "Uncle Henrik was at home when the family arrived.", "options": ["True", "False"], "answer": "False"},
+    {"question": "The soldiers on the train questioned Annemarie and her family.", "options": ["True", "False"], "answer": "False"},
+    {"question": "Kirsti talked about Ellen being Jewish on the train.", "options": ["True", "False"], "answer": "False"},
+    {"question": "Describe why the soldiers were suspicious of Ellen in Chapter 5.", "options": ["She was hiding something.", "She looked different from the rest of the family.", "She was speaking a different language.", "She was carrying a suspicious bag."], "answer": "She looked different from the rest of the family."},
+    {"question": "Explain how Mr. Johansen convinced the soldiers that Ellen was part of the family.", "options": ["He showed them Ellen’s birth certificate.", "He showed them baby pictures.", "He called Ellen’s parents to confirm.", "He bribed the soldiers."], "answer": "He showed them baby pictures."},
+    {"question": "What was the purpose of going to Uncle Henrik’s house?", "options": ["For a vacation", "To hide from the Nazis", "To help with fishing", "To attend a family gathering"], "answer": "To hide from the Nazis"},
+    {"question": "How did Annemarie feel about the soldiers on the train?", "options": ["She was excited.", "She was nervous and afraid.", "She was indifferent.", "She was angry."], "answer": "She was nervous and afraid."},
+    {"question": "What did Kirsti do that showed her innocence and lack of understanding of the situation?", "options": ["She talked back to soldiers and chatted freely.", "She stayed quiet.", "She hid behind her mother.", "She cried."], "answer": "She talked back to soldiers and chatted freely."},
+    {"question": "Why was Ellen’s necklace a problem, and what did Annemarie do with it?", "options": ["It was too tight; she threw it away.", "It was a Jewish symbol; she hid it.", "It was broken; she fixed it.", "It was expensive; she kept it safe."], "answer": "It was a Jewish symbol; she hid it."},
+    {"question": "What code phrase did Mr. Johansen use when speaking to Uncle Henrik, and what did it mean?", "options": ["“Is the weather good for fishing?” meaning “Is it safe for Ellen?”", "“How’s the fishing?” meaning “Are there soldiers around?”", "“Are the fish biting?” meaning “Is it a good day?”", "“How’s the weather?” meaning “Is it safe?”"], "answer": "“Is the weather good for fishing?” meaning “Is it safe for Ellen?”"},
+    {"question": "How did the Johansen family explain Ellen’s presence to the soldiers in Chapter 5?", "options": ["They said she was a family friend.", "They said she was their daughter.", "They said she was a neighbor.", "They said she was visiting."], "answer": "They said she was their daughter."},
+    {"question": "What did Annemarie notice about the sea when she arrived at Uncle Henrik’s house?", "options": ["It was frightening.", "It was beautiful and familiar.", "It was polluted.", "It was full of ships."], "answer": "It was beautiful and familiar."},
+    {"question": "Why was Kirsti’s behavior on the train potentially dangerous, even though she didn’t say anything specific about Ellen?", "options": ["She was too quiet.", "She was talkative and could draw attention.", "She was sleeping.", "She was reading."], "answer": "She was talkative and could draw attention."}
+]
+
+# Verify exactly 60 questions
+assert len(questions) == 60, f"Expected 60 questions, but found {len(questions)}!"
+
+# Shuffle questions
+random.shuffle(questions)
+
+# Game variables
+points = 0
+streak = 0
+incorrect_questions = []
+current_question = 0
+total_questions = len(questions)
+
+# Character comments
+comments = {
+    "correct": ["Annemarie says: 'Great job, we’re one step closer!'", "Kirsti cheers: 'BOOM! Take that, soldiers!'", "Uncle Henrik nods: 'Well done, fisherman!'"],
+    "incorrect": ["Kirsti pouts: 'Don’t! You messed up!'", "Annemarie whispers: 'Careful, the Nazis might hear!'", "Uncle Henrik sighs: 'Try harder next time.'"]
+}
+
+# Create the main window
+root = tk.Tk()
+root.title("Resistance Mission: Save Ellen!")
+root.geometry("600x400")
+root.configure(bg="#E6E6FA")  # Soft lavender background
+
+# Function to update progress bar
+def update_progress():
+    progress_bar["value"] = (current_question + 1) / total_questions * 100
+    progress_label.config(text=f"Progress: {current_question + 1}/{total_questions}")
+
+# Function to check answer
+def check_answer(selected_option):
+    global points, streak, current_question
+    correct_answer = questions[current_question]["answer"]
+    if selected_option == correct_answer:
+        streak += 1
+        points += 10
+        if streak >= 3:
+            points += 5
+            feedback_label.config(text="Streak Bonus! +5 points!", fg="#FFA500")
+        else:
+            feedback_label.config(text="Correct! +10 points! BOOM!", fg="#228B22")
+        comment_label.config(text=random.choice(comments["correct"]))
+        if correct_sound:
+            correct_sound.play()  # Play correct sound
+    else:
+        streak = 0
+        incorrect_questions.append(questions[current_question]["question"])
+        feedback_label.config(text="Incorrect. UH-OH!", fg="#CD5C5C")
+        comment_label.config(text=random.choice(comments["incorrect"]))
+        if incorrect_sound:
+            incorrect_sound.play()  # Play incorrect sound
+    
+    next_button.config(state="normal")
+    for btn in option_buttons:
+        btn.config(state="disabled")
+
+# Function to load next question
+def next_question():
+    global current_question
+    current_question += 1
+    if current_question < total_questions:
+        load_question()
+    else:
+        show_results()
+    next_button.config(state="disabled")
+
+# Function to load a question
+def load_question():
+    question_label.config(text=f"Mission Step {current_question + 1}: {questions[current_question]['question']}")
+    for i, btn in enumerate(option_buttons):
+        if i < len(questions[current_question]["options"]):
+            btn.config(text=questions[current_question]["options"][i], state="normal", bg="#F0F0F0", fg="#333333")
+            btn.pack(pady=5)
+        else:
+            btn.pack_forget()
+    feedback_label.config(text="")
+    comment_label.config(text="")
+    update_progress()
+
+# Function to show final results
+def show_results():
+    result_text = f"Mission Complete!\nScore: {points} points out of {total_questions * 10} possible!\nAccuracy: {total_questions - len(incorrect_questions)}/{total_questions}"
+    if incorrect_questions:
+        result_text += "\n\nMistakes to review:\n" + "\n".join([f"{i+1}. {q}" for i, q in enumerate(incorrect_questions)])
+    else:
+        result_text += "\n\nPerfect Mission! Ellen is safe!"
+    messagebox.showinfo("Mission Results", result_text)
+    root.destroy()
+
+# GUI Elements
+title_label = tk.Label(root, text="Resistance Mission: Save Ellen!", font=("Arial", 16, "bold"), bg="#E6E6FA", fg="#483D8B")
+title_label.pack(pady=10)
+
+question_label = tk.Label(root, text="", font=("Arial", 12), bg="#E6E6FA", fg="#333333", wraplength=500)
+question_label.pack(pady=10)
+
+option_buttons = []
+for i in range(4):
+    btn = tk.Button(root, text="", font=("Arial", 10), width=40, command=lambda x=i: check_answer(questions[current_question]["options"][x]))
+    option_buttons.append(btn)
+
+feedback_label = tk.Label(root, text="", font=("Arial", 12, "bold"), bg="#E6E6FA")
+feedback_label.pack(pady=5)
+
+comment_label = tk.Label(root, text="", font=("Arial", 10, "italic"), bg="#E6E6FA", fg="#6A5ACD")
+comment_label.pack(pady=5)
+
+progress_label = tk.Label(root, text="", font=("Arial", 10), bg="#E6E6FA", fg="#333333")
+progress_label.pack(pady=5)
+
+progress_bar = ttk.Progressbar(root, length=200, mode="determinate")
+progress_bar.pack(pady=5)
+
+next_button = tk.Button(root, text="Next", font=("Arial", 12), command=next_question, state="disabled", bg="#98FB98", fg="#333333")
+next_button.pack(pady=10)
+
+# Start the game
+load_question()
+
+# Run the application
+root.mainloop()
